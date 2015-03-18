@@ -1,0 +1,54 @@
+---
+title: "5-Fold Cross Validation"
+author: "Daivd Leslie"
+date: "Monday, March 16, 2015"
+output: html_document
+---
+The purpose of the code is to evaluate how well the 5-fold method protects a model against overfitting. In order to acomplish this, the predictive power of each model, or in other words, how well each test set (fold) predicts the train set will be judged. Let's first start by generating a popluation, which we will sample from. 
+
+```{r}
+# Create predictor variables
+set.seed(10)
+pop = 9000
+x1 = rnorm(pop)
+x2 = rnorm(pop)
+x3 = rnorm(pop)
+
+# Create noise
+noise = rnorm(pop,0,3)
+
+# Generate responce: additive model plus noise, intercept = 0
+y = 2*x1 + x2 + 3*x3 + noise
+
+# Organize predictors and responce in data frame
+pop_data = data.frame(y, x1, x2, x3)
+
+head(pop_data)
+
+```
+
+Now that we have our population, lets take a sample from it and construct a model using that sample data. 
+
+```{r}
+# Create sample population
+n = 375
+samp = pop_data[sample(nrow(pop_data), n), ]
+# Create model(s)
+mod = lm(y ~ x1 + x2 + x3, data=samp)
+
+head(samp)
+summary(mod)
+
+```
+
+Looking at the model summary, it appears that calculated coeffeicents are fairly close to actaul coefficents. It also appears that approximately 60% of the variability can be explained by the predictor variables. While this r squared value is good, we still have no idea how good the model will be a predicting on new data. In order to accploish this, lets split the data into five test and training sets to see if:
+
+1. How much the r squared value changes.
+
+2. How much the coeffcients vary
+
+```{r}
+library(lattice)
+library(DAAG)
+cv.lm(df=samp, mod, m=5)
+```
