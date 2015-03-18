@@ -1,3 +1,3 @@
 # quant_methods
-Repository for classwork
-This is my first repository!
+Repository for class project
+Class project: Evaluating Cross-validation methods for spatial data.
