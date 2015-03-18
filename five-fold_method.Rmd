@@ -4,7 +4,9 @@ author: "Daivd Leslie"
 date: "Monday, March 16, 2015"
 output: html_document
 ---
-The purpose of the code is to evaluate how well the 5-fold method protects a model against overfitting. In order to acomplish this, the predictive power of each model, or in other words, how well each test set (fold) predicts the train set will be judged. Let's first start by generating a popluation, which we will sample from. 
+The purpose of the code is to evaluate how well the 5-fold method protects a model against overfitting. 
+In order to acomplish this, the predictive power of each model, or in other words, how well each test set 
+(fold) predicts the train set will be judged. Let's first start by generating a popluation, which we will sample from. 
 
 ```{r}
 # Create predictor variables
