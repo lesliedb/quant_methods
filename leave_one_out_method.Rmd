@@ -49,22 +49,27 @@ Looking at the model summary, it appears that calculated coeffeicents are fairly
 ```{r}
 # Altered leaveOneOut script from original
 LeaveOneOut = function(data, model) {
-  actual = data[,1]
-  matrixCoef = matrix(, nrow=0, ncol=ncol(data))
+  matrixCoef = matrix(NA, nrow=nrow(data), ncol=length(coef(model)))
+  colnames(matrixCoef) = names(coef(model))
   predicted = NULL
   for(i in 1:nrow(data)) {
     trainSet = data[-i,]
     testSet = data[i,]
-    trainMod = update(lm(model, data=trainSet), data=trainSet)
-    assign(paste("modelCoef", i, sep=""), coef(trainMod))
-    matrixCoef = rbind(get(paste("modelCoef", i, sep="")), matrixCoef)
+    trainMod = update(model, data=trainSet)
+    matrixCoef[i, ] = coef(trainMod)
     predicted[i] = predict(trainMod, newdata = testSet)
   }
-  finalMatrix = cbind(matrixCoef, predicted, actual)
+  observed = residuals(mod) + predict(mod)
+  finalMatrix = data.frame(matrixCoef, predicted, observed)
+  names(finalMatrix)[1] = 'intercept'
   return(finalMatrix)
 }
 
-resultsMatrix = LeaveOneOut(samp, y ~ x1 + x2 + x3)
+fit_mod = lm(y ~ x1 + x2 + x3, data=samp)
+resultsMatrix = LeaveOneOut(samp, fit_mod)
+
+plot(observed ~ predicted, data=resultsMatrix)
+abline(a=0, b=1)
 
 head(resultsMatrix)
 ```
