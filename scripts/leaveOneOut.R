@@ -1,28 +1,22 @@
 # This function accepts a data.frame and a model (y ~ xx + xx) and 
-# returns a matrix containing model coeffecients (constructed 
-# from train sets), predicted values (using test sets), and actual 
-# values 
-
-# Assumptions:
-#
-#   All data in data.frame will be used
-#
-#   The value to be predicted from the 
-#   data.frame will be the first column
-#   in the data set
+# returns a matrix containing: the intercept, model coeffecient(s) (constructed 
+# from train sets), predicted (using test sets), observed, and r square values. 
 
 LeaveOneOut = function(data, model) {
-  actual = data[,1]
-  matrixCoef = matrix(, nrow=0, ncol=ncol(data))
+  matrixCoef = matrix(NA, nrow=nrow(data), ncol=length(coef(model)))
+  colnames(matrixCoef) = names(coef(model))
   predicted = NULL
+  rSquared = NULL
   for(i in 1:nrow(data)) {
     trainSet = data[-i,]
     testSet = data[i,]
-    trainMod = update(lm(model, data=trainSet), data=trainSet)
-    modelCoef = coef(trainMod)
-    matrixCoef = rbind(modelCoef, matrixCoef)
+    trainMod = update(model, data=trainSet)
+    matrixCoef[i, ] = coef(trainMod)
     predicted[i] = predict(trainMod, newdata = testSet)
+    rSquared[i] = summary(trainMod)$r.squared
   }
-  finalMatrix = cbind(matrixCoef, predicted, actual)
+  observed = residuals(mod) + predict(mod)
+  finalMatrix = data.frame(matrixCoef, predicted, observed, rSquared)
+  names(finalMatrix)[1] = 'intercept'
   return(finalMatrix)
 }
