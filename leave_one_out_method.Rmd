@@ -4,7 +4,7 @@ author: "Daivd Leslie"
 date: "Monday, March 24, 2015"
 output: pdf_document
 ---
-The purpose of the code is to evaluate the effectiveness of the leave one out method for determining the predictive power of each model constructed. In order to acomplish this, the model will be constructed by reducing the data by one sample. The sample that is left out will then be used as a new data point to be predicted by the model constructued. By looking at the differences in the predicted value by the model and the actual value recorded, a greater insight will be gained as to how well the model preforms when predicting new data. Let's first start by generating a popluation, which we will sample from. 
+The purpose of the code is to evaluate the effectiveness of the leave one out method for determining the predictive power of each model given. In order to acomplish this, the model given will be trained with data that has been reduced by one sample. The sample that is left out will then be used as a new data point to be predicted by the given model. By looking at the differences in the predicted value by the model and the actual value recorded, a greater insight will be gained as to how well the model preforms when predicting new data. Let's first start by generating a popluation, which we will sample from.
 
 ```{r}
 # Create predictor variables
@@ -14,7 +14,7 @@ x1 = rnorm(pop)
 x2 = rnorm(pop)
 x3 = rnorm(pop)
 
-# Create noise
+# Create noise term
 noise = rnorm(pop,0,3)
 
 # Generate responce: additive model plus noise, intercept = 0
@@ -47,8 +47,24 @@ Looking at the model summary, it appears that calculated coeffeicents are fairly
 2. How much the coeffcients vary between models
 
 ```{r}
-# Altered leaveOneOut script from original
-LeaveOneOut = function(data, model) {
+# Function(s)
+get_R2 = function(obs, pred, na.rm=FALSE) {
+  if (na.rm) {
+    true = !(is.na(obs) | is.na(pred))
+    obs = obs[true]
+    pred = pred[true]
+  }
+  SSerr = sum((obs - pred)^2)
+  SStot = sum((obs - mean(obs))^2)
+  R2 = 1 - SSerr / SStot
+  return(R2)
+}
+
+get_training_set = function {
+  
+}
+
+leave_one_out = function(data, model) {
   matrixCoef = matrix(NA, nrow=nrow(data), ncol=length(coef(model)))
   colnames(matrixCoef) = names(coef(model))
   predicted = NULL
@@ -60,9 +76,10 @@ LeaveOneOut = function(data, model) {
     matrixCoef[i, ] = coef(trainMod)
     predicted[i] = predict(trainMod, newdata = testSet)
     rSquared[i] = summary(trainMod)$r.squared
+    test = get_R2(residuals(trainMod) + predict(trainMod), predict(trainMod))
   }
   observed = residuals(mod) + predict(mod)
-  finalMatrix = data.frame(matrixCoef, predicted, observed, rSquared)
+  finalMatrix = data.frame(matrixCoef, predicted, observed, rSquared, test)
   names(finalMatrix)[1] = 'intercept'
   return(finalMatrix)
 }
@@ -73,6 +90,6 @@ resultsMatrix = LeaveOneOut(samp, fit_mod)
 plot(observed ~ predicted, data=resultsMatrix)
 abline(a=0, b=1)
 
-head(resultsMatrix)
+resultsMatrix
 ```
 From the results, it appears that the coeffeicents are not varying too much, which would suggest that the models are not overfitting the data. However, the differences in the predicted and actual values do vary slightly with each model prediction. Despite this varation, all the models constructed have relatively the same r squared value of roughtly 60%, which would suggest that all of the models have about the same predictive power.  
