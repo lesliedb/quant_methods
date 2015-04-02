@@ -16,30 +16,28 @@ n = 100
 # Set distance between points (Must be derived from data)
 spat_range = 5
 
-# Generate spatially autocorralated data
+# Create  a model with spatial dependence
 mod_spat_dep = RMexp(var=1, scale=spat_range)
-spat_err = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
+
+# Create spatially autocorralated predictor variables
 x1 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
 x2 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
 x3 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
 
-# Plot data
-plot(x1)
-
-# Plot variogram
-plot(RFempiricalvariogram(data=x1))
+# Create spatail error term
+spat_err = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
 
 # Convert objects to vectors
 spat_err = as.vector(spat_err)
 x1 = as.vector(x1)
 x2 = as.vector(x2)
 x3 = as.vector(x3)
-y = 2*x1 + 0*x2 + x3 + spat_err
+y = 2*x1 + x2 + 3*x3 + spat_err
 
 # Create coordinates
 coords = cbind(rep(x=1:n, times=n), rep(x=1:n,each=n))
 
-# Create data.frame
+# Organize coordinates, predictors, and responce in data frame
 dataset = data.frame(y, x1, x2, x3, coords)
 
 head(dataset)
@@ -52,16 +50,19 @@ Now that we have our spatially autocorrelated data, lets take a sample of our da
 # Create sample population
 n = 2000
 samp = sample(nrow(dataset), size=n)
-# Generate responce: additive model plus spatial error
+# Create model(s)
 mods = list()
 mods$x1234_mod = glm(y ~ x1 + x2 + x3, data = dataset[samp, ])
+
+
+model = glm(y ~ x1 + x2 + x3, data = dataset[samp, ])
 
 summary(mods$x1234_mod)
 ```
 
 Looking at the model summary, it appears that calculated coeffeicents are fairly close to actual coefficents. Now that we feel cofident about the sample taken, lets see how good the models generated will be at predicting new data. In order to do this, lets apply the spatial leave one out method to the data.
 
-```{r}
+```{r warning=FALSE}
 # Function(s)
 get_training_rows = function(coords, dist_thres, longlat=FALSE) {
     ## Computing the distance matrix from the data:
@@ -84,45 +85,52 @@ get_training_rows = function(coords, dist_thres, longlat=FALSE) {
 }
 
 sloo_simple = function(model,training){
+  intercept = NULL
+  x1 = NULL
+  x2 = NULL
+  x3 = NULL
+  predicted = NULL
+  observed = NULL
+  logLik = NULL
   # Creating the response variable name
   y <- as.character(x=formula(x=model)[2])
   # Initializing the 'logLik' object
-  logLik <- vector(mode="numeric",length=nrow(x=model$data))
+  # logLik <- vector(mode="numeric",length=nrow(x=model$data))
 	# Calculating the SLOO logLikelihoods for each observation i
 	for(i in 1:nrow(x=model$data)){ 
 		# Extracting the i-st training set:
 	   training_data <- model$data[training[[i]],]
 		# Calculating the model parameters from the i-st training set:
 		m <- glm(formula=formula(model),data=training_data,family= model$family)
+    
+    intercept[i] = coef(m)[1]
+    x1[i] = coef(m)[2]
+    x2[i] = coef(m)[3]
+    x3[i] = coef(m)[4]
+    
 		# Predicting the i-st observation from the i-st training set:
-		m.pred <- predict(object=m,newdata=model$data[i,],type="response")
+		predicted[i] <- predict(object=m,newdata=model$data[i,],type="response")
+    observed[i] <- residuals(m) + predict(m)
 		# Calculating the probability of the i-st observed value according
     # to the predicted one by the i-st training set:
-    logLik[i] <- dnorm(x=model$data[i,y],mean=m.pred,
+    logLik[i] <- dnorm(x=model$data[i,y],mean=predicted[i],
                       sd=sqrt(sum(residuals(m)^2)/nrow(training_data)),
                       log=T)
   }
+  finalMatrix = data.frame(intercept, x1, x2, x3, predicted, observed, logLik)
 	# Calculating the overall SLOO logLikelihood:
-	Sum.logLik <- sum(logLik)
-	return(Sum.logLik)
+	# Sum.logLik <- sum(logLik)
+	return(finalMatrix)
 }
 
 training = get_training_rows(coords[samp, ], dist_thres = spat_range)
 
 # evalutate the four models using log likelihood 
 # with the SLOO and a non-spatial approach
-sloo_ll = sapply(mods, function(x) sloo_simple(x, training))
-ll = sapply(mods, logLik)
+sloo_ll = sloo_simple(model, training)
+#ll = sapply(mods, logLik)
 
-sloo_ll
-ll
+head(sloo_ll)
 
-sort(sloo_ll, dec=T)
-sort(ll, dec=T)
-
-# FYI the relationship between ll and AIC is given by
-# AIC = 2*k - 2*ll where k is the number of parameters in the model
-2* c(2, 3, 3, 4) - 2*ll
-sapply(mods, AIC)
 
 ```
