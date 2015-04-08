@@ -60,11 +60,7 @@ get_R2 = function(obs, pred, na.rm=FALSE) {
   return(R2)
 }
 
-get_training_set = function {
-  
-}
-
-leave_one_out = function(data, model) {
+Leave_one_out = function(data, model) {
   matrixCoef = matrix(NA, nrow=nrow(data), ncol=length(coef(model)))
   colnames(matrixCoef) = names(coef(model))
   predicted = NULL
@@ -76,20 +72,20 @@ leave_one_out = function(data, model) {
     matrixCoef[i, ] = coef(trainMod)
     predicted[i] = predict(trainMod, newdata = testSet)
     rSquared[i] = summary(trainMod)$r.squared
-    test = get_R2(residuals(trainMod) + predict(trainMod), predict(trainMod))
+    rSquaredCalc = get_R2(residuals(trainMod) + predict(trainMod), predict(trainMod))
   }
   observed = residuals(mod) + predict(mod)
-  finalMatrix = data.frame(matrixCoef, predicted, observed, rSquared, test)
+  finalMatrix = data.frame(matrixCoef, predicted, observed, rSquared, rSquaredCalc)
   names(finalMatrix)[1] = 'intercept'
   return(finalMatrix)
 }
 
 fit_mod = lm(y ~ x1 + x2 + x3, data=samp)
-resultsMatrix = LeaveOneOut(samp, fit_mod)
+resultsMatrix = Leave_one_out(samp, fit_mod)
 
 plot(observed ~ predicted, data=resultsMatrix)
 abline(a=0, b=1)
 
-resultsMatrix
+head(resultsMatrix)
 ```
 From the results, it appears that the coeffeicents are not varying too much, which would suggest that the models are not overfitting the data. However, the differences in the predicted and actual values do vary slightly with each model prediction. Despite this varation, all the models constructed have relatively the same r squared value of roughtly 60%, which would suggest that all of the models have about the same predictive power.  
