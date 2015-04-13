@@ -5,19 +5,36 @@ date: "Sunday, April 12, 2015"
 output: pdf_document
 ---
 
-The purpose of the code is to evaluate the effectiveness of the leave one out method for determining the predictive power of each model given. In order to acomplish this, the model given will be trained with data that has been reduced by one sample. The sample that is left out will then be used as a new data point to be predicted by the given model. By looking at the differences in the predicted value by the model and the actual value recorded, a greater insight will be gained as to how well the model preforms when predicting new data. Let's first start by generating a popluation, which we will sample from.
+The purpose of the code is to ...
 
 ```{r}
-# Fix random number generator for consistant data
-set.seed(10)
+# Import Statement(s)
+library(RandomFields)
 
-# Population size
-pop = 9000
+# Create Grid
+n = 100
 
-# Create predictor variable(s) with normal distribution
-x1 = rnorm(pop)
-x2 = rnorm(pop)
-x3 = rnorm(pop)
+# Set distance between points
+spat_range = 1:10
+
+# Create spatially autocorralated predictor variables
+for(i in spat_range) {
+  print(i)
+}
+
+# Create  a model with spatial dependence
+mod_spat_dep = RMexp(var=1, scale=spat_range)
+
+# Create spatially autocorralated predictor variables
+x1 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
+x2 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
+x3 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
+
+# Convert objects variables to vectors
+#spat_err = as.vector(spat_err)
+x1 = as.vector(x1)
+x2 = as.vector(x2)
+x3 = as.vector(x3)
 
 # Organize predictor(s) in data.frame
 pop_data = data.frame(x1, x2, x3)
@@ -29,9 +46,18 @@ head(pop_data)
 # considered for noise variable
 numSds = 8
 
+# Set distance between points (Must be derived from data)
+spat_range = 5
+
+# Create spatail error term
+spat_err = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
+
 # Create empty list for noise and responce variable
 noise = list()
 y = list()
+
+
+y = 2*x1 + x2 + 3*x3 + spat_err
 
 # For loop to generte noise and y values and append them to
 # predictor(s) data.frame
