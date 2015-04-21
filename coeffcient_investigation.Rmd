@@ -86,9 +86,9 @@ coefVals = array(NA, dim=c(numMat, numColsCoef, numReps), dimnames = list(1:numM
 for(i in 1:numReps) {
  for(j in 1:numMat) {
   model = glm(y ~ x1 + x2 + x3, data = as.data.frame(resultsArray[,,j,i]))
-  coefVals[, 1, i] = 2 - coef(model)[2]
-  coefVals[, 2, i] = 1 - coef(model)[3]
-  coefVals[, 3, i] = 3 - coef(model)[4]
+  coefVals[j, 1, i] = 2 - coef(model)[2]
+  coefVals[j, 2, i] = 1 - coef(model)[3]
+  coefVals[j, 3, i] = 3 - coef(model)[4]
   coefVals[j, 4, i] = spat_range[j]
   coefVals[j, 5, i] = var_range[i]
   } 
@@ -96,8 +96,8 @@ for(i in 1:numReps) {
 
 # Plot accuracy
 par(mfrow=c(2,2))
-plot(coefVals[, 4, 8], coefVals[, 1, 8], type='o')
-abline(lm(coefVals[, 1, 1] ~ coefVals[, 4, 1]))
+plot(coefVals[, 4, 2], coefVals[, 1, 2], type='o')
+abline(lm(coefVals[, 1, 2] ~ coefVals[, 4, 2]))
 
 
 plot(coefVals[, 4, 1], coefVals[,2, 1], type='o')
