@@ -1,0 +1,72 @@
+---
+title: "Generate Data"
+author: "Daivd Leslie"
+date: "Wednesday, April 22, 2015"
+output: pdf_document
+---
+
+```{r}
+# Set grid size
+n = 100
+
+# Select desired number of matrices
+numMat = 100
+
+# Select number of columns
+numCols = 6
+
+# Select the number of repetitions 
+numReps = 10
+
+# Names of columns
+# Must match the number of coulmns
+colNames = c('y', 'x1', 'x2', 'x3', 'xCoord', 'yCoord')
+
+# Create arrary filled with NAs
+resultsArray = array(1:(numCols*n^2), dim=c(n^2, numCols, numMat, numReps), dimnames = list(1:n^2, colNames ,NULL))
+
+```
+
+Now that the array has been created, we can now begin to fill the array with data that we will using for the investigation. In order to accomplish this spatailly autocorrelated data will be generated using a modified version of the Spatail leave-one-out method developed by Le Rest.
+
+```{r, warning=FALSE, message=FALSE}
+# Import Statement(s)
+library(RandomFields)
+
+# Set spatail range for distance between points
+spat_range =  seq(0.001, 60, length.out=numMat)
+
+# Determine range of varience
+var_range = 1:10
+
+for(i in 1:numReps) {
+  for (j in 1:numMat) {
+  # Create  a model with spatial dependence
+  mod_spat_dep = RMexp(var=var_range[i], scale=spat_range[j])
+        
+  # Create spatially autocorralated predictor variables
+  x1 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
+  x2 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
+  x3 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
+  
+  # Create spatail error term
+  spat_err = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
+        
+  # Convert objects variables to vectors and store in columns
+  spat_err = as.vector(spat_err)
+  resultsArray[, 2, j, i] = as.vector(x1)
+  resultsArray[, 3, j, i] = as.vector(x2)
+  resultsArray[, 4, j, i] = as.vector(x3)
+  resultsArray[, 1, j, i] = 2*resultsArray[, 2, j, i] + resultsArray[, 3, j, i] + 3*resultsArray[, 4, j, i] + spat_err
+  
+  # Coords
+  resultsArray[, 5, j, i] = rep(x=1:n, times=n)
+  resultsArray[, 6, j, i] = rep(x=1:n, each=n)
+  }
+}
+
+head(resultsArray[, , 1 ,1])
+head(resultsArray[, , 2 ,1])
+head(resultsArray[, , 3 ,1])
+
+```
