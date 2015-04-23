@@ -1,82 +1,30 @@
 ---
-title: "coeffcient_investigation"
+title: "Coeffcient Investigation"
 author: "Daivd Leslie"
 date: "Sunday, April 12, 2015"
 output: pdf_document
 ---
+* This code assumes an array filled with spatially autocorrelated data has already been generated.
 
-The first step in investigating coeffcients will be to setup data storage for generated data. In order to accomplish this, an arrary of matrixes containing generated data will be created. To determind the size of the arrary, a grid size must be provided.
+Now that the data has been generated, let's see how the accurary of the model coeffcients changes as the spatail range increases (Remebering that they should be close to the exspected values of: x1=2, x2=1, and x3=3).
 
 ```{r}
-# Set grid size
-n = 100
+# Load data
+load("~/R/EVSS695/spatial_cv/resultsVarStagScaleStep.Rdata")
 
-# Select desired number of matrices
-numMat = 30
+# Must match numMat from generated data
+numMat = 100
 
-# Select number of columns
-numCols = 6
-
-# Select the number of repetitions 
+# Must match numReps from generated data
 numReps = 10
 
-# Names of columns
-# Must match the number of coulmns
-colNames = c('y', 'x1', 'x2', 'x3', 'xCoord', 'yCoord')
-
-# Create arrary filled with NAs
-resultsArray = array(1:(numCols*n^2), dim=c(n^2, numCols, numMat, numReps), dimnames = list(1:n^2, colNames ,NULL))
-
-```
-
-Now that the array has been created, we can now begin to fill the array with data that we will using for the investigation. In order to accomplish this spatailly autocorrelated data will be generated using a modified version of the Spatail leave-one-out method developed by Le Rest.
-
-```{r, warning=FALSE, message=FALSE}
-# Import Statement(s)
-library(RandomFields)
-
-# Set spatail range for distance between points
+# ust match spat_range from generated data
 spat_range =  seq(0.001, 60, length.out=numMat)
 
-# Determine range of varience
+# ust match var_range from generated data
 var_range = 1:10
 
-for(i in 1:numReps) {
-  for (j in 1:numMat) {
-  # Create  a model with spatial dependence
-  mod_spat_dep = RMexp(var=var_range[i], scale=spat_range[j])
-        
-  # Create spatially autocorralated predictor variables
-  x1 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
-  x2 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
-  x3 = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
-  
-  # Create spatail error term
-  spat_err = RFsimulate(mod_spat_dep, x=1:n, y=1:n, grid=T)
-        
-  # Convert objects variables to vectors and store in columns
-  spat_err = as.vector(spat_err)
-  resultsArray[, 2, j, i] = as.vector(x1)
-  resultsArray[, 3, j, i] = as.vector(x2)
-  resultsArray[, 4, j, i] = as.vector(x3)
-  resultsArray[, 1, j, i] = 2*resultsArray[, 2, j, i] + resultsArray[, 3, j, i] + 3*resultsArray[, 4, j, i] + spat_err
-  
-  # Coords
-  resultsArray[, 5, j, i] = rep(x=1:n, times=n)
-  resultsArray[, 6, j, i] = rep(x=1:n, each=n)
-  }
-}
-
-head(resultsArray[, , 1 ,1])
-head(resultsArray[, , 2 ,1])
-head(resultsArray[, , 3 ,1])
-
-```
-
-Now that we have the arrary filled with spatially autocorrelated data, let's see how the accurary of the model coeffcients changes as the spatail range increases (Remebering that they should be close to the exspected values of: x1=2, x2=1, and x3=3).
-
-```{r}
-
+# Set numbers of colmns in coeffcients array
 numColsCoef = 5
 
 # Create arrary filled with coeffcient values
@@ -94,22 +42,113 @@ for(i in 1:numReps) {
   } 
 }
 
-# Plot accuracy
-par(mfrow=c(2,2))
+# Check array
+head(coefVals[,,1])
+head(coefVals[,,5])
+head(coefVals[,,10])
+```
+
+# X1 Coeffcient Difference Plots
+```{r, echo=FALSE}
+# Plot accuracy of coeffcients
+# Set margins
+par( mfrow = c(2, 2))
+
+plot(coefVals[, 4, 1], coefVals[, 1, 1], type='o')
+abline(lm(coefVals[, 1, 1] ~ coefVals[, 4, 1]))
+
 plot(coefVals[, 4, 2], coefVals[, 1, 2], type='o')
 abline(lm(coefVals[, 1, 2] ~ coefVals[, 4, 2]))
 
+plot(coefVals[, 4, 3], coefVals[, 1, 3], type='o')
+abline(lm(coefVals[, 1, 3] ~ coefVals[, 4, 3]))
 
+plot(coefVals[, 4, 4], coefVals[, 1, 4], type='o')
+abline(lm(coefVals[, 1, 4] ~ coefVals[, 4, 4]))
+
+# Set margins
+par( mfrow = c(2, 2))
+
+plot(coefVals[, 4, 5], coefVals[, 1, 5], type='o')
+abline(lm(coefVals[, 1, 5] ~ coefVals[, 4, 5]))
+  
+plot(coefVals[, 4, 6], coefVals[, 1, 6], type='o')
+abline(lm(coefVals[, 1, 6] ~ coefVals[, 4, 6]))
+  
+plot(coefVals[, 4, 7], coefVals[, 1, 7], type='o')
+abline(lm(coefVals[, 1, 7] ~ coefVals[, 4, 7]))
+  
+plot(coefVals[, 4, 8], coefVals[, 1, 8], type='o')
+abline(lm(coefVals[, 1, 8] ~ coefVals[, 4, 8]))
+
+# Set margins
+par( mfrow = c(2, 2))
+
+plot(coefVals[, 4, 9], coefVals[, 1, 9], type='o')
+abline(lm(coefVals[, 1, 9] ~ coefVals[, 4, 9]))
+  
+plot(coefVals[, 4, 10], coefVals[, 1, 10], type='o')
+abline(lm(coefVals[, 1, 10] ~ coefVals[, 4, 10]))
+
+```
+
+# X2 Coeffcient Difference Plots
+```{r, echo=FALSE}
+# Plot accuracy of coeffcients
+# Set margins
+par( mfrow = c(2, 2))
 plot(coefVals[, 4, 1], coefVals[,2, 1], type='o')
 abline(lm(coefVals[, 2, 1] ~ coefVals[, 4, 1]))
 
-plot(coefVals[,4, 1], coefVals[,3, 1], type='o')
-abline(lm(coefVals[, 3, 1] ~ coefVals[, 4, 1]))
+plot(coefVals[, 4, 2], coefVals[, 2, 2], type='o')
+abline(lm(coefVals[, 2, 2] ~ coefVals[, 4, 2]))
+
+plot(coefVals[, 4, 3], coefVals[, 2, 3], type='o')
+abline(lm(coefVals[, 2, 3] ~ co
+          efVals[, 4, 3]))
+
+plot(coefVals[, 4, 4], coefVals[, 1, 4], type='o')
+abline(lm(coefVals[, 1, 4] ~ coefVals[, 4, 4]))
+
+# Set margins
+par( mfrow = c(2, 2))
+
+plot(coefVals[, 4, 5], coefVals[, 1, 5], type='o')
+abline(lm(coefVals[, 1, 5] ~ coefVals[, 4, 5]))
+  
+plot(coefVals[, 4, 6], coefVals[, 1, 6], type='o')
+abline(lm(coefVals[, 1, 6] ~ coefVals[, 4, 6]))
+  
+plot(coefVals[, 4, 7], coefVals[, 1, 7], type='o')
+abline(lm(coefVals[, 1, 7] ~ coefVals[, 4, 7]))
+  
+plot(coefVals[, 4, 8], coefVals[, 1, 8], type='o')
+abline(lm(coefVals[, 1, 8] ~ coefVals[, 4, 8]))
+
+# Set margins
+par( mfrow = c(2, 2))
+
+plot(coefVals[, 4, 9], coefVals[, 1, 9], type='o')
+abline(lm(coefVals[, 1, 9] ~ coefVals[, 4, 9]))
+  
+plot(coefVals[, 4, 10], coefVals[, 1, 10], type='o')
+abline(lm(coefVals[, 1, 10] ~ coefVals[, 4, 10]))
+
 ```
 
+# X3 Coeffcient Difference Plots
+```{r, echo=FALSE}
+# Plot accuracy of coeffcients
+# Set margins
+par( mfrow = c(2, 2))
+plot(coefVals[,4, 1], coefVals[,3, 1], type='o')
+abline(lm(coefVals[, 3, 1] ~ coefVals[, 4, 1]))
+
+```
 From the plots, it appears that the model coeffceints are somewhat accrurate. Now lets look at how the precision changes.
 
 ```{r}
+"
 coefVals = matrix(NA, nrow=numMat, ncol=3, dimnames=list(1:numMat,c('x1_dif', 'x2_dif', 'x3_dif')))
 for(i in 1:numMat) {
   model = glm(y ~ x1 + x2 + x3, data = as.data.frame(resultsArray[,,i]))
@@ -133,4 +172,6 @@ abline(lm(coefVals[,2] ~ coefVals[,4]))
 
 plot(coefVals[,4], coefVals[,3], type='o')
 abline(lm(coefVals[,3] ~ coefVals[,4]))
+"
+
 ```
